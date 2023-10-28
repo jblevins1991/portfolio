@@ -1,0 +1,22 @@
+# Nightowl-Developers, LLC 2022
+#
+# This pipeline is developed to deploy our docker
+# image built in the merge.yaml pipeline to a
+# Kubernetes cluster.
+#
+name: Template Release Pipeline
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      # read version from package.json
+      - name: Read Version
+
+      # deploy helm chart
+      - name: Deploy Frontend

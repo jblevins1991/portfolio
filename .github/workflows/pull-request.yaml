@@ -1,0 +1,45 @@
+# Nightowl-Developers, LLC 2022
+#
+# This pipeline is developed to run all of the
+# Nightowl-Developers code standards when a
+# Pull Request is created, edited, or reviewed.
+#
+name: Template Pull Request Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+      # checkout repo
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # setup node.js
+      - name: Node Setup
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      # install npm packages using yarn
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      # run build
+      - name: Build
+        run: yarn build
+
+      # run linter
+      # - name: Lint
+      #   run: yarn lint
+
+      # run e2e tests
+#      - name: Tests
+#        run: yarn test

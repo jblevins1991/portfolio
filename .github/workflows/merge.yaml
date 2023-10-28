@@ -1,0 +1,75 @@
+# Nightowl-Developers, LLC 2022
+#
+# This pipeline is developed to build out a docker
+# image of a sveltekit application when a new
+# GitHub release is created.
+#
+name: Template Merge Pipeline
+
+on:
+  push:
+    branches:
+      - 'main'
+
+env:
+  # set our docker registry url to ghcr.io to use github packages
+  REGISTRY: ghcr.io
+  # set our image name to our repository name
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      # checkout repo
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # version bump and tag with version number
+      - name: Bump and Tag Version
+        id: version-and-tag
+        uses: phips28/gh-action-bump-version@master
+        with:
+          tag-prefix: 'v'
+          commit-message: 'CI: bumps version to {{version}} [skip ci]'
+
+      # generate the changelog
+#      - name: Generate Changelog
+#        uses: heinrichreimer/github-changelog-generator-action@v2.3
+#        with:
+#          token: ${{ secrets.GITHUB_TOKEN }}
+#          stripGeneratorNotice: true
+
+      # get the package.json version
+      - name: get-npm-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@main
+
+      # login to gh packages registry
+      - name: Login to Packages
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # extract tags and labels from the branch
+      - name: Extract Metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          # the repository owner section is specific to pushing to github packages
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: ${{ steps.get-version.outputs.version }}
+
+      # build docker image to gh packages
+      - name: Build Docker Image
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: .
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          push: true
